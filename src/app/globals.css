@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+/* =========================================================================
+   Tema "Pellizzari" — mesma paleta quente do painel da campanha.
+   gold #D99A2B · brick #B0503F · ink #3A271E · cream #F7F0DA · line #E6D8BB
+   ========================================================================= */
+:root {
+  --background: #f7f0da; /* cream */
+  --foreground: #3a271e; /* ink */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@theme {
+  --color-gold: #d99a2b;
+  --color-gold-deep: #c6892a;
+  --color-brick: #b0503f;
+  --color-brick-dark: #8c3c2e;
+  --color-ink: #3a271e;
+  --color-cream: #f7f0da;
+  --color-line: #e6d8bb;
+
+  --color-slate-50: #faf7ef;
+  --color-slate-100: #f3ecdb;
+  --color-slate-200: #e6d8bb;
+  --color-slate-300: #d6c5a3;
+  --color-slate-400: #b9a78c;
+  --color-slate-500: #8f7d6c;
+  --color-slate-600: #6f5f51;
+  --color-slate-700: #574a40;
+  --color-slate-800: #433730;
+  --color-slate-900: #3a271e;
+  --color-slate-950: #271a13;
+
+  --color-blue-50: #fbeee9;
+  --color-blue-100: #f6dcd3;
+  --color-blue-200: #ecbcac;
+  --color-blue-300: #de9580;
+  --color-blue-400: #ca6e56;
+  --color-blue-500: #b0503f;
+  --color-blue-600: #9c4435;
+  --color-blue-700: #8c3c2e;
+  --color-blue-800: #733226;
+  --color-blue-900: #5d2920;
+  --color-blue-950: #371712;
+
+  --color-amber-50: #fbf3da;
+  --color-amber-100: #f7e7b3;
+  --color-amber-200: #edd083;
+  --color-amber-300: #e3c488;
+  --color-amber-400: #d99a2b;
+  --color-amber-500: #c6892a;
+  --color-amber-600: #ad741f;
+  --color-amber-700: #8c5c19;
+  --color-amber-800: #6f4815;
+  --color-amber-900: #523510;
+  --color-amber-950: #2f1e08;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d6c5a3 transparent;
+}
