@@ -33,13 +33,13 @@ function VBars({ dados, cor = "var(--color-gold)", altura = 120 }: { dados: { la
     <div className="flex items-end gap-1.5 overflow-x-auto pb-1" style={{ height: altura + 28 }}>
       {dados.map((d) => (
         <div key={d.label} className="flex min-w-[34px] flex-1 flex-col items-center justify-end gap-1">
-          <span className="text-[10px] font-semibold text-slate-600">{fmt(d.valor)}</span>
+          <span className="text-[11px] font-semibold text-slate-600">{fmt(d.valor)}</span>
           <div
             className="w-full rounded-t"
             style={{ height: Math.max(2, (d.valor / max) * altura), background: d.destaque ? "var(--color-brick)" : cor }}
             title={`${d.label}: ${fmt(d.valor)}`}
           />
-          <span className="whitespace-nowrap text-[10px] text-slate-500">{d.label}</span>
+          <span className="whitespace-nowrap text-[11px] text-slate-500">{d.label}</span>
         </div>
       ))}
     </div>
@@ -53,7 +53,7 @@ function Titulo({ icon, children }: { icon: React.ReactNode; children: React.Rea
   return (
     <div className="mb-3 flex items-center gap-2">
       <span className="text-gold-deep">{icon}</span>
-      <h3 className="text-sm font-bold text-ink">{children}</h3>
+      <h3 className="text-base font-bold text-ink">{children}</h3>
     </div>
   );
 }
@@ -143,14 +143,14 @@ export default function Analise({ posts }: { posts: Post[] }) {
       {/* Diagnóstico */}
       <Card className="border-brick/30 bg-brick/5">
         <Titulo icon={<TrendingDown size={16} />}>Diagnóstico central</Titulo>
-        <p className="text-sm leading-relaxed text-slate-700">
+        <p className="text-base leading-relaxed text-slate-700">
           O engajamento <b>despencou</b> conforme o conteúdo se institucionalizou e o volume explodiu. A conta
           <b> hiberna entre eleições e faz blitz na campanha</b> (set/2024: 108 posts) — o algoritmo pune o liga-desliga
           e cada ciclo recomeça do zero. A mediana de engajamento caiu de <b>{fmt(porAno.find((y) => y.ano === "2021")?.medianaEng ?? 0)}</b> em
           2021 para <b>{fmt(porAno.find((y) => y.ano === "2024")?.medianaEng ?? 0)}</b> em 2024.
         </p>
         <div className="mt-4">
-          <p className="mb-2 text-xs font-semibold text-slate-500">Mediana de engajamento por ano</p>
+          <p className="mb-2 text-sm font-semibold text-slate-500">Mediana de engajamento por ano</p>
           <VBars dados={porAno.map((y) => ({ label: y.ano, valor: y.medianaEng, destaque: y.ano === "2024" }))} />
         </div>
       </Card>
@@ -159,13 +159,13 @@ export default function Analise({ posts }: { posts: Post[] }) {
         {/* O que funciona */}
         <Card>
           <Titulo icon={<Sparkles size={16} />}>O que funciona (DNA da conta)</Titulo>
-          <p className="mb-3 text-sm text-slate-600">
+          <p className="mb-3 text-base text-slate-600">
             Os campeões são <b>pessoais, humanos, com humor e identidade</b> — não cards de campanha. Vacina,
             família, pets, Vasco, poesia, e <b>perguntas de mobilização</b>. É o &quot;professor gente-boa&quot; que gera alcance e afeto.
           </p>
           <ul className="space-y-1.5">
             {top.map((p) => (
-              <li key={p.media_id} className="flex items-center gap-2 text-sm">
+              <li key={p.media_id} className="flex items-center gap-2 text-base">
                 <span className="w-14 shrink-0 font-semibold text-brick">{fmt(p.like_count ?? 0)}❤</span>
                 <a href={p.permalink} target="_blank" rel="noreferrer" className="truncate text-slate-600 hover:underline">
                   {excerto(p, 60)}
@@ -178,13 +178,13 @@ export default function Analise({ posts }: { posts: Post[] }) {
         {/* O que não funciona */}
         <Card>
           <Titulo icon={<AlertTriangle size={16} />}>O que não funciona (peso morto)</Titulo>
-          <p className="mb-3 text-sm text-slate-600">
+          <p className="mb-3 text-base text-slate-600">
             <b>Card institucional/policy seco</b> — estatísticas, datas comemorativas, &quot;compartilhe esse card&quot;.
             Passa seriedade, mas mata alcance e treina o algoritmo pra baixo. Piores de 2024:
           </p>
           <ul className="space-y-1.5">
             {piores.map((p) => (
-              <li key={p.media_id} className="flex items-center gap-2 text-sm">
+              <li key={p.media_id} className="flex items-center gap-2 text-base">
                 <span className="w-14 shrink-0 font-semibold text-slate-400">{fmt(p.like_count ?? 0)}❤</span>
                 <a href={p.permalink} target="_blank" rel="noreferrer" className="truncate text-slate-500 hover:underline">
                   {excerto(p, 60)}
@@ -201,13 +201,13 @@ export default function Analise({ posts }: { posts: Post[] }) {
         <div className="grid gap-4 sm:grid-cols-[1fr_1.4fr]">
           <div className="space-y-2">
             {porTipo.map((t) => (
-              <div key={t.tipo} className="flex items-center justify-between rounded-lg border border-line bg-cream/40 px-3 py-2 text-sm">
+              <div key={t.tipo} className="flex items-center justify-between rounded-lg border border-line bg-cream/40 px-3 py-2 text-base">
                 <span className="font-medium text-ink">{t.tipo}</span>
                 <span className="text-slate-500">{t.pct}% · mediana {fmt(t.medianaEng)}</span>
               </div>
             ))}
           </div>
-          <div className="rounded-lg bg-gold/10 p-3 text-sm leading-relaxed text-slate-700">
+          <div className="rounded-lg bg-gold/10 p-3 text-base leading-relaxed text-slate-700">
             <b>Reel é motor de alcance e compartilhamento, não de curtida.</b> Ex.: o reel das <i>bets</i> teve 350 curtidas
             — mas <b>6.328 views e 93 compartilhamentos</b>. Medir reel por curtida subestima seu valor. Os insights
             (alcance/salvamentos/compartilhamentos) vão reordenar o &quot;top conteúdo&quot; por alcance real.
@@ -219,10 +219,10 @@ export default function Analise({ posts }: { posts: Post[] }) {
         {/* Debate */}
         <Card>
           <Titulo icon={<MessageSquare size={16} />}>Gatilhos de debate</Titulo>
-          <p className="mb-3 text-sm text-slate-600">Maior razão comentário/curtida — <b>pergunta + convite + anúncio + posição</b> geram conversa (forte pro algoritmo):</p>
+          <p className="mb-3 text-base text-slate-600">Maior razão comentário/curtida — <b>pergunta + convite + anúncio + posição</b> geram conversa (forte pro algoritmo):</p>
           <ul className="space-y-1.5">
             {debate.map((p) => (
-              <li key={p.media_id} className="flex items-center gap-2 text-sm">
+              <li key={p.media_id} className="flex items-center gap-2 text-base">
                 <span className="w-12 shrink-0 font-semibold text-gold-deep">{p.comments_count}💬</span>
                 <a href={p.permalink} target="_blank" rel="noreferrer" className="truncate text-slate-600 hover:underline">
                   {excerto(p, 55)}
@@ -235,7 +235,7 @@ export default function Analise({ posts }: { posts: Post[] }) {
         {/* Legenda */}
         <Card>
           <Titulo icon={<Hash size={16} />}>Tamanho de legenda</Titulo>
-          <p className="mb-3 text-sm text-slate-600"><b>Legenda curta e punchy vence</b> (exceto o &quot;textão emocional&quot; autêntico). Mediana de engajamento por faixa de caracteres:</p>
+          <p className="mb-3 text-base text-slate-600"><b>Legenda curta e punchy vence</b> (exceto o &quot;textão emocional&quot; autêntico). Mediana de engajamento por faixa de caracteres:</p>
           <VBars dados={legenda.map((l) => ({ label: l.label, valor: l.valor }))} altura={90} cor="var(--color-amber-400)" />
         </Card>
       </div>
@@ -245,14 +245,14 @@ export default function Analise({ posts }: { posts: Post[] }) {
         <Titulo icon={<Clock size={16} />}>Timing (BRT)</Titulo>
         <div className="grid gap-4 lg:grid-cols-2">
           <div>
-            <p className="mb-2 text-xs font-semibold text-slate-500">Engajamento médio por horário</p>
+            <p className="mb-2 text-sm font-semibold text-slate-500">Engajamento médio por horário</p>
             <VBars dados={porHora} altura={90} />
-            <p className="mt-2 text-xs text-slate-500">Melhores janelas: <b>21h, 13–14h, 18–20h</b>.</p>
+            <p className="mt-2 text-sm text-slate-500">Melhores janelas: <b>21h, 13–14h, 18–20h</b>.</p>
           </div>
           <div>
-            <p className="mb-2 text-xs font-semibold text-slate-500">Engajamento médio por dia</p>
+            <p className="mb-2 text-sm font-semibold text-slate-500">Engajamento médio por dia</p>
             <VBars dados={porDia.map((d) => ({ label: d.label, valor: d.valor }))} altura={90} cor="var(--color-amber-400)" />
-            <p className="mt-2 text-xs text-slate-500">Melhores: <b>Dom, Qua, Ter</b>. Evitar Qui/Sex e manhãs.</p>
+            <p className="mt-2 text-sm text-slate-500">Melhores: <b>Dom, Qua, Ter</b>. Evitar Qui/Sex e manhãs.</p>
           </div>
         </div>
       </Card>
@@ -262,21 +262,21 @@ export default function Analise({ posts }: { posts: Post[] }) {
         <Titulo icon={<Users2 size={16} />}>Pilares & rede</Titulo>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <p className="mb-2 text-sm text-slate-700">
+            <p className="mb-2 text-base text-slate-700">
               <b>Pilares:</b> Educação (marca central — &quot;professor na política&quot;), Cultura/Ciência (sarau, poesia,
               Planetário do Rio), Rio &amp; causas, e a camada humana (Vasco, família, pets, humor).
             </p>
             <div className="flex flex-wrap gap-1">
               {hashtags.map(([t, c]) => (
-                <span key={t} className="rounded-full bg-cream px-2 py-0.5 text-xs text-slate-600">{t} · {c}</span>
+                <span key={t} className="rounded-full bg-cream px-2 py-0.5 text-sm text-slate-600">{t} · {c}</span>
               ))}
             </div>
           </div>
           <div>
-            <p className="mb-2 text-sm text-slate-700"><b>Ecossistema político</b> (perfis mais marcados) — campo progressista/PSB + educação:</p>
+            <p className="mb-2 text-base text-slate-700"><b>Ecossistema político</b> (perfis mais marcados) — campo progressista/PSB + educação:</p>
             <div className="flex flex-wrap gap-1">
               {mentions.map(([t, c]) => (
-                <span key={t} className="rounded-full border border-line bg-white px-2 py-0.5 text-xs text-slate-600">{t} · {c}</span>
+                <span key={t} className="rounded-full border border-line bg-white px-2 py-0.5 text-sm text-slate-600">{t} · {c}</span>
               ))}
             </div>
           </div>
@@ -286,7 +286,7 @@ export default function Analise({ posts }: { posts: Post[] }) {
       {/* Recomendações */}
       <Card className="border-gold/40 bg-gold/5">
         <Titulo icon={<Lightbulb size={16} />}>Recomendações para o plano</Titulo>
-        <ol className="list-decimal space-y-1.5 pl-5 text-sm text-slate-700">
+        <ol className="list-decimal space-y-1.5 pl-5 text-base text-slate-700">
           <li><b>Reabilitar o &quot;professor gente-boa&quot;</b> — reintroduzir camada pessoal/humor/família/Vasco/poesia entre as pautas.</li>
           <li><b>Cortar o card institucional seco</b> — transformar política pública em história/rosto/reel narrado, não infográfico.</li>
           <li><b>Cadência sustentada já</b> — baseline constante (4–5/semana) pra chegar na campanha com a conta &quot;quente&quot;, sem começar do frio.</li>
@@ -298,7 +298,7 @@ export default function Analise({ posts }: { posts: Post[] }) {
       {/* Hipóteses */}
       <Card>
         <Titulo icon={<Target size={16} />}>Hipóteses para cruzar (personas · plano · clipping)</Titulo>
-        <ul className="list-disc space-y-1.5 pl-5 text-sm text-slate-700">
+        <ul className="list-disc space-y-1.5 pl-5 text-base text-slate-700">
           <li>As pautas que <b>engajam</b> (educação, cultura/ciência, humano) batem com as <b>prioridades das personas</b>? Onde há descasamento?</li>
           <li>O <b>clipping</b> (picos de notícia) correlaciona com picos de engajamento? → oportunidades de newsjacking.</li>
           <li>O <b>plano de comunicação</b> prioriza pilares com base de engajamento comprovada — ou aposta em temas que não engajam?</li>
@@ -306,7 +306,7 @@ export default function Analise({ posts }: { posts: Post[] }) {
         </ul>
       </Card>
 
-      <p className="pb-2 text-center text-xs text-slate-400">
+      <p className="pb-2 text-center text-sm text-slate-400">
         Base: {fmt(base.length)} posts (2020–2026) · curtidas, comentários, legenda, formato e horário.
         Alcance/salvamentos/compartilhamentos entram assim que a coleta de insights concluir.
       </p>
