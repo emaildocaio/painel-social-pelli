@@ -86,6 +86,9 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [ordenar, setOrdenar] = useState<"engajamento" | "curtidas" | "comentarios" | "recentes">("engajamento");
+  const [tipoFiltro, setTipoFiltro] = useState<string>("todos");
+  const [anoFiltro, setAnoFiltro] = useState<string>("todos");
+  const [visiveis, setVisiveis] = useState(60);
 
   const buscar = useCallback(async (chave: string) => {
     setLoading(true);
@@ -121,8 +124,19 @@ export default function Home() {
     }
   }, [buscar]);
 
+  const anos = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of data?.posts ?? []) {
+      const y = new Date(p.timestamp ?? 0).getFullYear();
+      if (!Number.isNaN(y)) set.add(String(y));
+    }
+    return [...set].sort((a, b) => Number(b) - Number(a));
+  }, [data]);
+
   const posts = useMemo(() => {
-    const arr = [...(data?.posts ?? [])];
+    let arr = [...(data?.posts ?? [])];
+    if (tipoFiltro !== "todos") arr = arr.filter((p) => p.media_type === tipoFiltro);
+    if (anoFiltro !== "todos") arr = arr.filter((p) => String(new Date(p.timestamp ?? 0).getFullYear()) === anoFiltro);
     arr.sort((a, b) => {
       if (ordenar === "curtidas") return (b.like_count ?? 0) - (a.like_count ?? 0);
       if (ordenar === "comentarios") return (b.comments_count ?? 0) - (a.comments_count ?? 0);
@@ -130,7 +144,11 @@ export default function Home() {
       return engajamento(b) - engajamento(a);
     });
     return arr;
-  }, [data, ordenar]);
+  }, [data, ordenar, tipoFiltro, anoFiltro]);
+
+  useEffect(() => {
+    setVisiveis(60);
+  }, [ordenar, tipoFiltro, anoFiltro]);
 
   const perfil = data?.perfil ?? null;
 
@@ -241,7 +259,7 @@ export default function Home() {
       {/* Posts */}
       <section>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-ink">Desempenho dos posts ({posts.length})</h2>
+          <h2 className="text-sm font-semibold text-ink">Desempenho dos posts · {fmt(posts.length)}</h2>
           <div className="flex flex-wrap gap-1">
             {(
               [
@@ -266,10 +284,66 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Filtros por tipo e ano */}
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap gap-1">
+            {(
+              [
+                ["todos", "Todos os tipos"],
+                ["IMAGE", "Imagem"],
+                ["VIDEO", "Reel/Vídeo"],
+                ["CAROUSEL_ALBUM", "Carrossel"],
+              ] as const
+            ).map(([val, lbl]) => (
+              <button
+                key={val}
+                onClick={() => setTipoFiltro(val)}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
+                  tipoFiltro === val
+                    ? "bg-brick text-white"
+                    : "border border-line bg-white text-slate-600 hover:bg-cream"
+                }`}
+              >
+                {lbl}
+              </button>
+            ))}
+          </div>
+          <select
+            value={anoFiltro}
+            onChange={(e) => setAnoFiltro(e.target.value)}
+            className="rounded-full border border-line bg-white px-3 py-1 text-xs font-medium text-slate-700 outline-none focus:border-gold"
+          >
+            <option value="todos">Todos os anos</option>
+            {anos.map((a) => (
+              <option key={a} value={a}>
+                {a}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {posts.map((p, i) => (
+          {posts.slice(0, visiveis).map((p, i) => (
             <PostCard key={p.media_id} post={p} rank={ordenar !== "recentes" ? i + 1 : undefined} />
           ))}
+        </div>
+
+        {posts.length === 0 && (
+          <p className="py-8 text-center text-sm text-slate-500">Nenhum post com esses filtros.</p>
+        )}
+
+        <div className="mt-5 flex flex-col items-center gap-2">
+          <p className="text-xs text-slate-500">
+            Mostrando {fmt(Math.min(visiveis, posts.length))} de {fmt(posts.length)}
+          </p>
+          {visiveis < posts.length && (
+            <button
+              onClick={() => setVisiveis((v) => v + 60)}
+              className="rounded-lg border border-line bg-white px-5 py-2 text-sm font-medium text-slate-700 transition hover:bg-cream"
+            >
+              Carregar mais
+            </button>
+          )}
         </div>
       </section>
     </main>
