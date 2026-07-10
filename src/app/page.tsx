@@ -262,7 +262,7 @@ export default function Home() {
         ))}
       </div>
 
-      {aba === "analise" && <Analise posts={data.posts ?? []} />}
+      {aba === "analise" && <Analise posts={data.posts ?? []} seguidores={perfil?.followers_count} />}
 
       {aba === "painel" && (
         <>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { TrendingDown, Sparkles, AlertTriangle, MessageSquare, Clock, Hash, Target, Lightbulb, Users2 } from "lucide-react";
+import { TrendingDown, Sparkles, AlertTriangle, MessageSquare, Clock, Hash, Target, Lightbulb, Users2, Radio, Bookmark, Share2 } from "lucide-react";
 
 type Post = {
   media_id: string;
@@ -11,11 +11,17 @@ type Post = {
   timestamp?: string;
   like_count?: number;
   comments_count?: number;
+  reach?: number;
+  saved?: number;
+  shares?: number;
+  views?: number;
 };
 
 const nf = new Intl.NumberFormat("pt-BR");
 const fmt = (n: number) => nf.format(Math.round(n));
 const eng = (p: Post) => (p.like_count ?? 0) + (p.comments_count ?? 0);
+const engOnReach = (p: Post) =>
+  (p.reach ?? 0) > 0 ? ((p.like_count ?? 0) + (p.comments_count ?? 0) + (p.saved ?? 0) + (p.shares ?? 0)) / (p.reach as number) : 0;
 const ano = (p: Post) => Number((p.timestamp ?? "0").slice(0, 4));
 const avg = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
 const median = (a: number[]) => {
@@ -58,8 +64,45 @@ function Titulo({ icon, children }: { icon: React.ReactNode; children: React.Rea
   );
 }
 
-export default function Analise({ posts }: { posts: Post[] }) {
+function FunilCol({ titulo, sub, cor, posts, valor, icon }: { titulo: string; sub: string; cor: string; posts: Post[]; valor: (p: Post) => string; icon: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-line bg-cream/30 p-3">
+      <div className={`mb-0.5 flex items-center gap-1.5 text-base font-bold ${cor}`}>
+        {icon}
+        {titulo}
+      </div>
+      <p className="mb-2 text-[11px] text-slate-500">{sub}</p>
+      <ul className="space-y-1.5">
+        {posts.map((p) => (
+          <li key={p.media_id} className="flex items-start gap-2 text-sm">
+            <span className={`w-20 shrink-0 font-semibold ${cor}`}>{valor(p)}</span>
+            <a href={p.permalink} target="_blank" rel="noreferrer" className="line-clamp-2 text-slate-600 hover:underline">
+              {(p.caption ?? "").replace(/\n/g, " ").slice(0, 60) || "(sem legenda)"}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default function Analise({ posts, seguidores = 52485 }: { posts: Post[]; seguidores?: number }) {
   const base = useMemo(() => posts.filter((p) => ano(p) >= 2020), [posts]);
+
+  // Alcance e compartilhamentos só são confiáveis de 2024+ (o IG não retém esses
+  // dados de posts antigos). Salvamentos valem em todos os anos.
+  const rec = useMemo(() => base.filter((p) => ano(p) >= 2024 && (p.reach ?? 0) > 0), [base]);
+  const funil = useMemo(
+    () => ({
+      medReach: median(rec.map((p) => p.reach ?? 0)),
+      medEng: median(rec.map(engOnReach)),
+      temInsights: rec.length > 0,
+      topReach: [...rec].sort((a, b) => (b.reach ?? 0) - (a.reach ?? 0)).slice(0, 6),
+      topSaved: [...base].filter((p) => p.saved != null).sort((a, b) => (b.saved ?? 0) - (a.saved ?? 0)).slice(0, 6),
+      topShares: [...rec].sort((a, b) => (b.shares ?? 0) - (a.shares ?? 0)).slice(0, 6),
+    }),
+    [base, rec],
+  );
 
   const porAno = useMemo(() => {
     const g: Record<string, Post[]> = {};
@@ -154,6 +197,53 @@ export default function Analise({ posts }: { posts: Post[] }) {
           <VBars dados={porAno.map((y) => ({ label: y.ano, valor: y.medianaEng, destaque: y.ano === "2024" }))} />
         </div>
       </Card>
+
+      {/* Funil: alcance / salvamento / compartilhamento */}
+      {funil.temInsights && (
+        <Card>
+          <Titulo icon={<Radio size={16} />}>Alcance, salvamentos &amp; compartilhamentos (funil)</Titulo>
+          <p className="mb-1 text-base leading-relaxed text-slate-700">
+            O gargalo é <b>distribuição</b>, não qualidade: quando o conteúdo alcança, engaja bem
+            (<b>{Math.round(funil.medEng * 100)}%</b> de engajamento sobre alcance, 2024+), mas a mediana de alcance é
+            <b> {fmt(funil.medReach)}</b> (~{Math.round((100 * funil.medReach) / (seguidores || 1))}% dos seguidores).
+            A alavanca é <b>ganhar alcance</b> — reels, ganchos compartilháveis e consistência.
+          </p>
+          <p className="mb-4 text-sm text-slate-400">
+            ⚠️ Alcance e compartilhamentos são confiáveis só de 2024+ (o IG não retém esses dados de posts antigos). Salvamentos valem em todos os anos.
+          </p>
+          <div className="grid gap-4 lg:grid-cols-3">
+            <FunilCol
+              titulo="Alcance"
+              sub="Awareness · reels de marco/identidade/notícia"
+              cor="text-blue-600"
+              icon={<Radio size={15} />}
+              posts={funil.topReach}
+              valor={(p) => `${fmt(p.reach ?? 0)} alc.`}
+            />
+            <FunilCol
+              titulo="Salvamentos"
+              sub="Utilidade · cola, poesia, filme, dado, data cívica"
+              cor="text-amber-600"
+              icon={<Bookmark size={15} />}
+              posts={funil.topSaved}
+              valor={(p) => `${fmt(p.saved ?? 0)} salv.`}
+            />
+            <FunilCol
+              titulo="Compartilhamentos"
+              sub="Mobilização · pedido claro + advocacy de pauta"
+              cor="text-brick"
+              icon={<Share2 size={15} />}
+              posts={funil.topShares}
+              valor={(p) => `${fmt(p.shares ?? 0)} comp.`}
+            />
+          </div>
+          <div className="mt-4 rounded-lg bg-gold/10 p-3 text-sm leading-relaxed text-slate-700">
+            <b>Mix sugerido de arrancada:</b> ~40% reel (alcance + mobilização, com pedido/número) · 30% utilidade
+            salvável (educação/cultura — o diferencial dele) · 30% humano/afeto (Vasco, família, bastidor).
+            Impulsionamento hoje é mínimo (~2 posts) — há espaço para <b>boost seletivo dos melhores orgânicos</b>, nunca de card institucional.
+          </div>
+        </Card>
+      )}
 
       <div className="grid gap-5 lg:grid-cols-2">
         {/* O que funciona */}
