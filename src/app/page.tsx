@@ -13,6 +13,7 @@ import {
   TrendingUp,
   LogOut,
 } from "lucide-react";
+import Analise from "./analise";
 
 // Feed protegido servido pelo n8n. A "casca" é pública; os dados só vêm com a
 // senha certa (?key=...). Sem senha, o feed responde 401 e o painel não mostra nada.
@@ -89,6 +90,7 @@ export default function Home() {
   const [tipoFiltro, setTipoFiltro] = useState<string>("todos");
   const [anoFiltro, setAnoFiltro] = useState<string>("todos");
   const [visiveis, setVisiveis] = useState(60);
+  const [aba, setAba] = useState<"painel" | "analise">("painel");
 
   const buscar = useCallback(async (chave: string) => {
     setLoading(true);
@@ -240,6 +242,30 @@ export default function Home() {
         </div>
       </header>
 
+      {/* Abas */}
+      <div className="mb-6 flex gap-1">
+        {(
+          [
+            ["painel", "Visão geral"],
+            ["analise", "Análise de conteúdo"],
+          ] as const
+        ).map(([v, l]) => (
+          <button
+            key={v}
+            onClick={() => setAba(v)}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+              aba === v ? "bg-ink text-cream" : "border border-line bg-white text-slate-600 hover:bg-cream"
+            }`}
+          >
+            {l}
+          </button>
+        ))}
+      </div>
+
+      {aba === "analise" && <Analise posts={data.posts ?? []} />}
+
+      {aba === "painel" && (
+        <>
       {/* KPIs */}
       <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Kpi icon={<Users size={18} />} label="Seguidores" value={fmt(perfil?.followers_count)} destaque />
@@ -346,6 +372,8 @@ export default function Home() {
           )}
         </div>
       </section>
+        </>
+      )}
     </main>
   );
 }
