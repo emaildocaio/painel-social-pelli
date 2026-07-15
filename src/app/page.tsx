@@ -120,10 +120,23 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const salva = typeof window !== "undefined" ? sessionStorage.getItem(STORAGE_KEY) : null;
-    if (salva) {
-      setKey(salva);
-      void buscar(salva);
+    if (typeof window === "undefined") return;
+    // Link mágico: a chave pode vir na URL (?k=...). Se vier, entra direto e
+    // limpa a chave da barra de endereço (pra não ficar no histórico/referrer).
+    // Sem chave na URL e sem sessão salva, cai na tela de senha (reserva).
+    const url = new URL(window.location.href);
+    const daUrl = url.searchParams.get("k");
+    let chave: string | null = null;
+    if (daUrl && daUrl.trim()) {
+      chave = daUrl.trim();
+      url.searchParams.delete("k");
+      window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+    } else {
+      chave = sessionStorage.getItem(STORAGE_KEY);
+    }
+    if (chave) {
+      setKey(chave);
+      void buscar(chave);
     }
   }, [buscar]);
 
@@ -378,6 +391,15 @@ export default function Home() {
       </section>
         </>
       )}
+
+      <footer className="mt-10 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-4 text-xs text-slate-500">
+        <span>
+          Produzido by <span className="font-semibold text-slate-600">@caio farias</span>
+        </span>
+        <a href="mailto:emaildocaio@gmail.com" className="font-medium text-brick hover:underline">
+          emaildocaio@gmail.com
+        </a>
+      </footer>
     </main>
   );
 }
