@@ -14,6 +14,7 @@ import {
   LogOut,
 } from "lucide-react";
 import Analise from "./analise";
+import Plano from "./plano";
 
 // Feed protegido servido pelo n8n. A "casca" é pública; os dados só vêm com a
 // senha certa (?key=...). Sem senha, o feed responde 401 e o painel não mostra nada.
@@ -90,7 +91,7 @@ export default function Home() {
   const [tipoFiltro, setTipoFiltro] = useState<string>("todos");
   const [anoFiltro, setAnoFiltro] = useState<string>("todos");
   const [visiveis, setVisiveis] = useState(60);
-  const [aba, setAba] = useState<"painel" | "analise">("painel");
+  const [aba, setAba] = useState<"painel" | "analise" | "plano">("painel");
 
   const buscar = useCallback(async (chave: string) => {
     setLoading(true);
@@ -248,6 +249,7 @@ export default function Home() {
           [
             ["painel", "Visão geral"],
             ["analise", "Análise de conteúdo"],
+            ["plano", "Plano da semana"],
           ] as const
         ).map(([v, l]) => (
           <button
@@ -263,6 +265,8 @@ export default function Home() {
       </div>
 
       {aba === "analise" && <Analise posts={data.posts ?? []} seguidores={perfil?.followers_count} />}
+
+      {aba === "plano" && <Plano />}
 
       {aba === "painel" && (
         <>
