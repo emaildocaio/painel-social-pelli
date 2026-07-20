@@ -12,6 +12,10 @@ import {
   RefreshCw,
   TrendingUp,
   LogOut,
+  Eye,
+  Bookmark,
+  Share2,
+  Signal,
 } from "lucide-react";
 import Analise from "./analise";
 import Plano from "./plano";
@@ -47,6 +51,11 @@ type Post = {
   timestamp?: string;
   like_count?: number;
   comments_count?: number;
+  reach?: number;
+  views?: number;
+  saved?: number;
+  shares?: number;
+  total_interactions?: number;
 };
 
 type Feed = {
@@ -488,6 +497,7 @@ function PostCard({ post, rank }: { post: Post; rank?: number }) {
   const [imgErro, setImgErro] = useState(false);
   const img = post.thumbnail_url || post.media_url;
   const tipo = TIPO_LABEL[post.media_type ?? ""] ?? post.media_type ?? "";
+  const hasInsights = Boolean(post.reach || post.views || post.saved || post.shares);
 
   return (
     <a
@@ -532,6 +542,34 @@ function PostCard({ post, rank }: { post: Post; rank?: number }) {
           <span className="ml-auto text-xs text-slate-400">{dataCurta(post.timestamp)}</span>
           <ExternalLink size={13} className="text-slate-400 opacity-0 transition group-hover:opacity-100" />
         </div>
+        {hasInsights && (
+          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 border-t border-line pt-2 text-xs text-slate-500">
+            {post.reach ? (
+              <span className="flex items-center gap-1" title="Alcance">
+                <Signal size={13} className="text-slate-400" /> {fmt(post.reach)}
+                <span className="text-slate-400">alcance</span>
+              </span>
+            ) : null}
+            {post.views ? (
+              <span className="flex items-center gap-1" title="Visualizações">
+                <Eye size={13} className="text-slate-400" /> {fmt(post.views)}
+                <span className="text-slate-400">views</span>
+              </span>
+            ) : null}
+            {post.saved ? (
+              <span className="flex items-center gap-1" title="Salvamentos">
+                <Bookmark size={13} className="text-slate-400" /> {fmt(post.saved)}
+                <span className="text-slate-400">salvos</span>
+              </span>
+            ) : null}
+            {post.shares ? (
+              <span className="flex items-center gap-1" title="Compartilhamentos">
+                <Share2 size={13} className="text-slate-400" /> {fmt(post.shares)}
+                <span className="text-slate-400">compart.</span>
+              </span>
+            ) : null}
+          </div>
+        )}
       </div>
     </a>
   );
