@@ -16,6 +16,7 @@ import {
   Bookmark,
   Share2,
   Signal,
+  CalendarRange,
 } from "lucide-react";
 import Analise from "./analise";
 import Plano from "./plano";
@@ -100,7 +101,7 @@ export default function Home() {
   const [tipoFiltro, setTipoFiltro] = useState<string>("todos");
   const [anoFiltro, setAnoFiltro] = useState<string>("todos");
   const [visiveis, setVisiveis] = useState(60);
-  const [aba, setAba] = useState<"painel" | "analise" | "plano">("painel");
+  const [aba, setAba] = useState<"painel" | "j180" | "analise" | "plano">("painel");
 
   const buscar = useCallback(async (chave: string) => {
     setLoading(true);
@@ -270,6 +271,7 @@ export default function Home() {
         {(
           [
             ["painel", "Visão geral"],
+            ["j180", "Últimos 180 dias"],
             ["analise", "Análise de conteúdo"],
             ["plano", "Plano da semana"],
           ] as const
@@ -285,6 +287,8 @@ export default function Home() {
           </button>
         ))}
       </div>
+
+      {aba === "j180" && <Janela180 posts={data.posts ?? []} />}
 
       {aba === "analise" && <Analise posts={data.posts ?? []} seguidores={perfil?.followers_count} />}
 
@@ -572,5 +576,197 @@ function PostCard({ post, rank }: { post: Post; rank?: number }) {
         )}
       </div>
     </a>
+  );
+}
+
+function MiniKpi({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-line bg-cream/30 p-3">
+      <p className="text-xs font-medium text-slate-500">{label}</p>
+      <p className="mt-0.5 text-lg font-bold text-ink">{value}</p>
+    </div>
+  );
+}
+
+// Recorte dos últimos 180 dias: exclui o peso de posts antigos e dá uma leitura
+// fiel do momento atual. Bônus: todo post aqui é recente, então alcance/views
+// (que o IG não retém de posts antigos) são 100% confiáveis nesta janela.
+function Janela180({ posts }: { posts: Post[] }) {
+  const [metrica, setMetrica] = useState<"engajamento" | "reach" | "views">("engajamento");
+  const [tipo, setTipo] = useState<string>("todos");
+
+  const inicio = useMemo(() => Date.now() - 180 * 24 * 3600 * 1000, []);
+
+  const base = useMemo(
+    () =>
+      (posts ?? [])
+        .filter((p) => {
+          const t = new Date(p.timestamp ?? 0).getTime();
+          return !Number.isNaN(t) && t >= inicio;
+        })
+        .sort((a, b) => new Date(b.timestamp ?? 0).getTime() - new Date(a.timestamp ?? 0).getTime()),
+    [posts, inicio]
+  );
+
+  const lista = useMemo(
+    () => (tipo === "todos" ? base : base.filter((p) => p.media_type === tipo)),
+    [base, tipo]
+  );
+
+  const valor = useCallback(
+    (p: Post) => (metrica === "reach" ? p.reach ?? 0 : metrica === "views" ? p.views ?? 0 : engajamento(p)),
+    [metrica]
+  );
+
+  const metricaLabel = metrica === "reach" ? "alcance" : metrica === "views" ? "views" : "engajamento";
+
+  const kpis = useMemo(() => {
+    const n = lista.length;
+    const media = (f: (p: Post) => number) => (n ? Math.round(lista.reduce((s, p) => s + f(p), 0) / n) : 0);
+    return {
+      n,
+      likes: media((p) => p.like_count ?? 0),
+      coments: media((p) => p.comments_count ?? 0),
+      reach: media((p) => p.reach ?? 0),
+    };
+  }, [lista]);
+
+  // Barras: média da métrica escolhida por mês, cobrindo toda a janela.
+  const meses = useMemo(() => {
+    const start = new Date(inicio);
+    const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+    const fim = new Date();
+    const out: { key: string; label: string; count: number; media: number }[] = [];
+    while (cursor <= fim) {
+      const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`;
+      const doMes = lista.filter((p) => (p.timestamp ?? "").slice(0, 7) === key);
+      const media = doMes.length ? Math.round(doMes.reduce((s, p) => s + valor(p), 0) / doMes.length) : 0;
+      out.push({
+        key,
+        label: cursor.toLocaleDateString("pt-BR", { month: "short" }).replace(".", ""),
+        count: doMes.length,
+        media,
+      });
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+    return out;
+  }, [lista, inicio, valor]);
+
+  const maxV = Math.max(1, ...meses.map((m) => m.media));
+  const w = 640;
+  const h = 170;
+  const padX = 10;
+  const padTop = 26;
+  const padBottom = 26;
+  const bw = (w - padX * 2) / Math.max(1, meses.length);
+
+  return (
+    <div>
+      <section className="mb-5 rounded-2xl border border-line bg-white p-5">
+        <div className="mb-1 flex items-center gap-2">
+          <CalendarRange size={16} className="text-gold-deep" />
+          <h2 className="text-sm font-semibold text-ink">Últimos 180 dias</h2>
+        </div>
+        <p className="mb-4 text-xs text-slate-500">
+          De {dataCurta(new Date(inicio).toISOString())} até hoje · {fmt(kpis.n)} publicações. Recorte para ler o momento
+          atual sem o peso de posts muito antigos.
+        </p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <MiniKpi label="Publicações" value={fmt(kpis.n)} />
+          <MiniKpi label="Curtidas (média)" value={fmt(kpis.likes)} />
+          <MiniKpi label="Comentários (média)" value={fmt(kpis.coments)} />
+          <MiniKpi label="Alcance (média)" value={kpis.reach ? fmt(kpis.reach) : "—"} />
+        </div>
+      </section>
+
+      <section className="mb-5 rounded-2xl border border-line bg-white p-5">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-sm font-semibold text-ink">Média de {metricaLabel} por mês</h3>
+          <div className="flex flex-wrap gap-1">
+            {(
+              [
+                ["engajamento", "Engajamento"],
+                ["reach", "Alcance"],
+                ["views", "Views"],
+              ] as const
+            ).map(([v, l]) => (
+              <button
+                key={v}
+                onClick={() => setMetrica(v)}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                  metrica === v ? "bg-ink text-cream" : "border border-line bg-white text-slate-600 hover:bg-cream"
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+        </div>
+        {kpis.n === 0 ? (
+          <p className="py-6 text-center text-sm text-slate-500">Sem publicações nos últimos 180 dias.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <svg viewBox={`0 0 ${w} ${h}`} className="h-44 w-full min-w-[420px]">
+              {meses.map((m, i) => {
+                const bh = (m.media / maxV) * (h - padTop - padBottom);
+                const x = padX + i * bw;
+                const barW = bw * 0.5;
+                const bx = x + (bw - barW) / 2;
+                const by = h - padBottom - bh;
+                return (
+                  <g key={m.key}>
+                    <rect x={bx} y={by} width={barW} height={Math.max(0, bh)} rx={4} fill="#d99a2b" />
+                    <text x={x + bw / 2} y={by - 6} textAnchor="middle" fontSize={11} fill="#6b6256">
+                      {m.media ? fmt(m.media) : ""}
+                    </text>
+                    <text x={x + bw / 2} y={h - 9} textAnchor="middle" fontSize={11} fill="#8a8172">
+                      {m.label}
+                      {m.count ? ` · ${m.count}` : ""}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+        )}
+        <p className="mt-1 text-xs text-slate-400">
+          Barras = média de {metricaLabel} por post no mês · o número ao lado do mês é a quantidade de posts.
+        </p>
+      </section>
+
+      <section>
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap gap-1">
+            {(
+              [
+                ["todos", "Todos os tipos"],
+                ["IMAGE", "Imagem"],
+                ["VIDEO", "Reel/Vídeo"],
+                ["CAROUSEL_ALBUM", "Carrossel"],
+              ] as const
+            ).map(([v, l]) => (
+              <button
+                key={v}
+                onClick={() => setTipo(v)}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
+                  tipo === v ? "bg-brick text-white" : "border border-line bg-white text-slate-600 hover:bg-cream"
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+          <span className="text-xs text-slate-500">{fmt(lista.length)} publicações</span>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {lista.map((p) => (
+            <PostCard key={p.media_id} post={p} />
+          ))}
+        </div>
+        {lista.length === 0 && (
+          <p className="py-8 text-center text-sm text-slate-500">Nenhuma publicação com esse filtro nos últimos 180 dias.</p>
+        )}
+      </section>
+    </div>
   );
 }
